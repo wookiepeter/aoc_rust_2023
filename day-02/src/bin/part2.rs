@@ -10,7 +10,7 @@ fn process(input: &str) -> String {
     input
         .lines()
         .map(day_02::parse_game_input)
-        .map(|(id, cubes)| {
+        .map(|(_, cubes)| {
             let min_red = cubes
                 .iter()
                 .filter(|cube| matches!(*cube, Cubes::Red(_)))
