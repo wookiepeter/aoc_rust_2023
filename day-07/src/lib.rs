@@ -1,5 +1,3 @@
-use std::{cmp::Ordering, str::Chars};
-
 pub struct Hand {
     hand: String,
     hand_type: HandType,

@@ -50,10 +50,9 @@ impl JokerHand {
 
 fn compute_hand_type(cards: &str) -> HandType {
     let mut card_counts = vec![];
-    let mut joker_count = 0usize;
 
     let mut char_vec: Vec<char> = cards.chars().filter(|c| *c != 'J').collect();
-    joker_count = cards.chars().filter(|c| *c == 'J').count();
+    let joker_count = cards.chars().filter(|c| *c == 'J').count();
 
     if joker_count == 5 {
         return HandType::Five;
