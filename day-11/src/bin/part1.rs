@@ -18,11 +18,7 @@ fn process(input: &str) -> String {
     let result = positions
         .iter()
         .permutations(2)
-        .map(|vec| {
-            let dist = aoc_util::manhattan_dist(vec[0], vec[1]);
-            println!("{:?} - {:?} -> {dist}", vec[0], vec[1]);
-            dist
-        })
+        .map(|vec: Vec<&(usize, usize)>| aoc_util::manhattan_dist(vec[0], vec[1]))
         .sum::<usize>();
 
     (result / 2).to_string()
