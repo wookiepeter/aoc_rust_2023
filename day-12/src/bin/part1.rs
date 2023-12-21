@@ -7,7 +7,7 @@ fn main() {
 fn process(input: &str) -> String {
     input
         .lines()
-        .map(day_12::process_line)
+        .map(day_12::process_line_unoptimized)
         .sum::<usize>()
         .to_string()
 }
