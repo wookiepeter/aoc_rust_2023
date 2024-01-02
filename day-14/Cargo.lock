@@ -3,5 +3,12 @@
 version = 3
 
 [[package]]
-name = "aoc_template"
+name = "aoc_util"
 version = "0.1.0"
+
+[[package]]
+name = "day-14"
+version = "0.1.0"
+dependencies = [
+ "aoc_util",
+]
