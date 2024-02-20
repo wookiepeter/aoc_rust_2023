@@ -1,5 +1,3 @@
-use std::collections::{HashMap, HashSet};
-
 use day_14::Rock;
 
 fn main() {
