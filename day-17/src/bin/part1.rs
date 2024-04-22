@@ -1,15 +1,7 @@
-use std::{
-    cmp::Ordering,
-    collections::{BinaryHeap, HashMap},
-    path, usize,
-};
+use std::collections::{BinaryHeap, HashMap};
 
-use aoc_util::{
-    direction::*,
-    grid::*,
-    manhattan_dist, print_hash_map_values,
-    usize_point::{point_add, Point},
-};
+use aoc_util::{direction::*, grid::*, usize_point::Point};
+use day_17::*;
 
 fn main() {
     let input = include_str!("./input.txt");
@@ -36,8 +28,6 @@ fn process(input: &str) -> String {
     // Keep a dict with all already visited positions,
     //      -> # of steps used to reach this node + heat generated on that path + horizontal / vertical
 
-    // TODO: Try and figure out an iterative solution for DFS because of [this](https://www.algobreath.com/notes/recursion-vs-iteration-in-rust)
-
     // use a BinaryHeap to do the priority queueing -> just need to flip the order!
 
     let visited: HashMap<(Point, bool), usize> = HashMap::new();
@@ -54,11 +44,11 @@ fn process(input: &str) -> String {
 
     while let Some(state) = data.queue.pop() {
         if state.last_step_horizontal {
-            add_steps_in_direction(&state, &mut data, Direction::Down);
-            add_steps_in_direction(&state, &mut data, Direction::Up);
+            add_steps_in_direction(&state, &mut data, Direction::Down, 0..3);
+            add_steps_in_direction(&state, &mut data, Direction::Up, 0..3);
         } else {
-            add_steps_in_direction(&state, &mut data, Direction::Right);
-            add_steps_in_direction(&state, &mut data, Direction::Left);
+            add_steps_in_direction(&state, &mut data, Direction::Right, 0..3);
+            add_steps_in_direction(&state, &mut data, Direction::Left, 0..3);
         }
     }
 
@@ -86,89 +76,6 @@ fn process(input: &str) -> String {
     */
 
     heat.to_string()
-}
-
-struct Data {
-    queue: BinaryHeap<GraphState>,
-    grid: Grid<usize>,
-    visited: HashMap<(Point, bool), usize>,
-}
-
-#[derive(PartialEq, Eq, Clone, Copy)]
-struct GraphState {
-    position: Point,
-    heat: usize,
-    last_step_horizontal: bool,
-    evaluation: usize,
-}
-
-impl Ord for GraphState {
-    fn cmp(&self, other: &Self) -> std::cmp::Ordering {
-        self.evaluation.cmp(&other.evaluation).reverse()
-    }
-}
-
-// probably not the way to do things but this is just used to satisfy trait bounds
-impl PartialOrd for GraphState {
-    fn partial_cmp(&self, other: &Self) -> Option<Ordering> {
-        Some(self.cmp(other))
-    }
-}
-
-impl GraphState {
-    pub fn new(
-        position: Point,
-        heat: usize,
-        last_dir: Direction,
-        grid: &Grid<usize>,
-    ) -> GraphState {
-        GraphState {
-            position,
-            heat,
-            last_step_horizontal: last_dir.is_horizontal(),
-            evaluation: heat + manhattan_dist(&position, &grid.size),
-        }
-    }
-}
-
-fn add_steps_in_direction(state: &GraphState, data: &mut Data, dir: Direction) {
-    let mut current_state = *state;
-    for _ in 0..3 {
-        if let Some(position) = point_add(current_state.position, dir.into(), data.grid.size) {
-            let new_state = GraphState::new(
-                position,
-                current_state.heat + data.grid.get(position).unwrap(),
-                dir,
-                &data.grid,
-            );
-
-            match data
-                .visited
-                .get(&(new_state.position, new_state.last_step_horizontal))
-            {
-                Some(value) if *value <= new_state.heat => {
-                    current_state = new_state;
-                    continue;
-                }
-                None | Some(_) => {
-                    data.visited.insert(
-                        (new_state.position, new_state.last_step_horizontal),
-                        new_state.heat,
-                    );
-                }
-            }
-            /*
-            println!(
-                "Added position with {:?} with heat {}",
-                new_state.position, new_state.heat
-            );
-            */
-            data.queue.push(new_state);
-            current_state = new_state;
-        } else {
-            return;
-        }
-    }
 }
 
 #[cfg(test)]
