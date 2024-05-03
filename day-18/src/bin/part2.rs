@@ -9,12 +9,16 @@ fn main() {
 }
 
 fn process(input: &str) -> String {
+    // perform linesweep algorithm over to determine total contained area
     let moves = read_moves(input);
 
     let start_position: (i64, i64) = (0, 0);
-    let mut lines = create_lines(start_position, moves);
+
+    let mut lines = create_lines(start_position, moves.clone());
+    // sort lines and put them into a VecDeque for easier handling during the line sweep algorithm
     lines.sort_by(|a, b| a.start.cmp(&b.start));
-    let mut lines: VecDeque<Line> = VecDeque::from(value);
+    let mut lines: VecDeque<Line> = VecDeque::from(lines);
+    // gather all unique horizontal points used used in the lines and sort them
     let mut horizontal_points: HashSet<i64> = HashSet::new();
     lines.iter().for_each(|line| {
         horizontal_points.insert(line.start);
@@ -24,13 +28,46 @@ fn process(input: &str) -> String {
     horizontal_points.sort();
     let mut horizontal_points: VecDeque<i64> = VecDeque::from(horizontal_points);
 
-    let mut prev_point = horizontal_points.pop_front().unwrap();
+    let mut active_lines: Vec<Line> = Vec::new();
+    let mut previous_x = horizontal_points.pop_front().unwrap();
+    while let Some(line) = lines.front() {
+        if line.start > previous_x {
+            break;
+        }
+        active_lines.push(lines.pop_front().unwrap());
+    }
 
-    while let Some(x) = horizontal_points.pop_front() {}
+    let mut area = 0;
 
-    let mut area = 0_i64;
+    while let Some(x) = horizontal_points.pop_front() {
+        let h_dist = x - previous_x;
 
-    input.to_string()
+        // tuples of all active lines should represent rectangles making up the space
+        // between the horizontal points and therefore the entire area inside the border
+        active_lines.sort_by(|a, b| a.y_pos.cmp(&b.y_pos));
+        for (a, b) in itertools::Itertools::tuples(active_lines.iter()) {
+            area += h_dist * i64::abs_diff(a.y_pos, b.y_pos) as i64
+        }
+
+        // remove all active lines where the current end is the current x
+        active_lines.retain(|line| line.end > x);
+        // grab all new lines with the same start point
+        while let Some(line) = lines.front() {
+            if line.start > x {
+                break;
+            }
+            active_lines.push(lines.pop_front().unwrap());
+        }
+        previous_x = x;
+    }
+
+    let border: i64 = moves.iter().map(|mv| mv.1).sum();
+
+    // This is required because of [PICKS THEOREM](https://en.wikipedia.org/wiki/Pick%27s_theorem)
+    // -> we count grid cells and not pure area -> need to include half the border + ...
+    let result: i64 = area + border / 2 + 1;
+
+    result.to_string()
 }
 
 fn create_lines(start_position: (i64, i64), moves: Vec<(Direction, i64)>) -> Vec<Line> {
@@ -52,7 +89,7 @@ fn create_lines(start_position: (i64, i64), moves: Vec<(Direction, i64)>) -> Vec
             Direction::Left => lines.push(Line {
                 y_pos: old_position.1,
                 start: position.0,
-                end: position.1,
+                end: old_position.0,
             }),
             _ => (),
         }
@@ -61,6 +98,7 @@ fn create_lines(start_position: (i64, i64), moves: Vec<(Direction, i64)>) -> Vec
     lines
 }
 
+#[derive(Clone, Copy)]
 struct Line {
     y_pos: i64,
     start: i64,
@@ -74,11 +112,12 @@ pub fn read_moves(input: &str) -> Vec<(Direction, i64)> {
             let vec: Vec<&str> = line.split('#').collect();
             let word = vec[1];
             let length = i64::from_str_radix(&word[0..5], 16).unwrap();
-            let direction = match (word.get(5).unwrap()) {
-                0 => Direction::Right,
-                1 => Direction::Down,
-                2 => Direction::Left,
-                3 => Direction::Up,
+
+            let direction = match word.chars().nth(5).unwrap() {
+                '0' => Direction::Right,
+                '1' => Direction::Down,
+                '2' => Direction::Left,
+                '3' => Direction::Up,
                 _ => panic!("Case should never be reached"),
             };
 
@@ -93,7 +132,22 @@ mod tests {
 
     #[test]
     fn test_example() {
-        let result = process("");
-        assert_eq!(result, "4".to_string())
+        let result = process(
+            "R 6 (#70c710)
+D 5 (#0dc571)
+L 2 (#5713f0)
+D 2 (#d2c081)
+R 2 (#59c680)
+D 2 (#411b91)
+L 5 (#8ceee2)
+U 2 (#caa173)
+L 1 (#1b58a2)
+U 2 (#caa171)
+R 2 (#7807d2)
+U 3 (#a77fa3)
+L 2 (#015232)
+U 2 (#7a21e3)",
+        );
+        assert_eq!(result, "952408144115".to_string())
     }
 }
