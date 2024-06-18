@@ -1,2 +1,3 @@
 aoc_rust_2023.code-workspace
 input.txt
+day-20/src/bin/graph_input.txt
